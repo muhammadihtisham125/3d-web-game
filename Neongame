@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+               maximum-scale=1.0, user-scalable=no">
+
+<title>Neon Space Runner</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #02030a;
+    font-family: Arial, Helvetica, sans-serif;
+    touch-action: none;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* =========================
+   SCORE
+========================= */
+
+#score {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 20;
+
+    padding: 10px 16px;
+
+    border: 1px solid #00ffff;
+    border-radius: 8px;
+
+    background: rgba(0, 10, 25, 0.65);
+
+    color: #00ffff;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 2px;
+
+    text-shadow:
+        0 0 5px #00ffff,
+        0 0 15px #00ffff;
+
+    box-shadow:
+        0 0 10px rgba(0,255,255,0.5),
+        inset 0 0 10px rgba(0,255,255,0.1);
+}
+
+/* =========================
+   DESKTOP INSTRUCTIONS
+========================= */
+
+#instructions {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    z-index: 20;
+
+    color: rgba(255,255,255,0.75);
+
+    font-size: 14px;
+    letter-spacing: 1px;
+
+    text-align: center;
+
+    pointer-events: none;
+}
+
+/* =========================
+   MOBILE CONTROLS
+========================= */
+
+#mobileControls {
+    position: fixed;
+
+    left: 0;
+    right: 0;
+    bottom: 25px;
+
+    z-index: 30;
+
+    display: none;
+
+    justify-content: space-between;
+
+    padding: 0 25px;
+
+    pointer-events: none;
+}
+
+.controlButton {
+    width: 85px;
+    height: 70px;
+
+    border: 2px solid #00ffff;
+    border-radius: 18px;
+
+    background: rgba(0, 20, 35, 0.65);
+
+    color: #00ffff;
+
+    font-size: 32px;
+    font-weight: bold;
+
+    box-shadow:
+        0 0 10px #00ffff,
+        inset 0 0 15px rgba(0,255,255,0.15);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    user-select: none;
+    -webkit-user-select: none;
+
+    pointer-events: auto;
+
+    touch-action: none;
+
+    transition: 0.1s;
+}
+
+.controlButton:active {
+    transform: scale(0.9);
+
+    background: rgba(0,255,255,0.25);
+
+    box-shadow:
+        0 0 20px #00ffff,
+        0 0 40px #00ffff;
+}
+
+/* =========================
+   GAME OVER
+========================= */
+
+#gameOver {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 50;
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-direction: column;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(255,0,170,0.15),
+            rgba(0,0,0,0.95) 65%
+        );
+
+    text-align: center;
+}
+
+#gameOver h1 {
+    font-size: clamp(42px, 10vw, 90px);
+
+    color: #ff008c;
+
+    letter-spacing: 7px;
+
+    text-shadow:
+        0 0 5px #ff008c,
+        0 0 15px #ff008c,
+        0 0 35px #ff008c;
+
+    animation: glitch 0.8s infinite alternate;
+}
+
+#finalScore {
+    margin: 20px 0 30px;
+
+    color: #00ffff;
+
+    font-size: 23px;
+
+    text-shadow:
+        0 0 15px #00ffff;
+}
+
+#restart {
+    padding: 15px 32px;
+
+    border: 2px solid #00ffff;
+    border-radius: 8px;
+
+    background: rgba(0,255,255,0.08);
+
+    color: #00ffff;
+
+    font-size: 17px;
+    font-weight: bold;
+
+    letter-spacing: 2px;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 0 10px #00ffff,
+        inset 0 0 10px rgba(0,255,255,0.15);
+
+    touch-action: manipulation;
+}
+
+#restart:active {
+    transform: scale(0.95);
+}
+
+@keyframes glitch {
+    from {
+        transform: translateX(-2px);
+    }
+
+    to {
+        transform: translateX(2px);
+    }
+}
+
+/* =========================
+   MOBILE RESPONSIVE
+========================= */
+
+@media (max-width: 768px) {
+
+    #instructions {
+        display: none;
+    }
+
+    #mobileControls {
+        display: flex;
+    }
+
+    #score {
+        top: 12px;
+        left: 12px;
+
+        font-size: 17px;
+
+        padding: 8px 13px;
+    }
+
+    #gameOver h1 {
+        letter-spacing: 4px;
+    }
+}
+
+/* Very small screens */
+
+@media (max-height: 500px) {
+
+    #mobileControls {
+        bottom: 10px;
+    }
+
+    .controlButton {
+        width: 70px;
+        height: 55px;
+        font-size: 25px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- =========================
+     SCORE
+========================= -->
+
+<div id="score">
+    SCORE: 0
+</div>
+
+
+<!-- =========================
+     DESKTOP INSTRUCTIONS
+========================= -->
+
+<div id="instructions">
+    ← → &nbsp; or &nbsp; A / D &nbsp; — &nbsp; STEER YOUR SHIP
+</div>
+
+
+<!-- =========================
+     MOBILE CONTROLS
+========================= -->
+
+<div id="mobileControls">
+
+    <button
+        id="leftButton"
+        class="controlButton"
+        aria-label="Move Left">
+        ◀
+    </button>
+
+    <button
+        id="rightButton"
+        class="controlButton"
+        aria-label="Move Right">
+        ▶
+    </button>
+
+</div>
+
+
+<!-- =========================
+     GAME OVER
+========================= -->
+
+<div id="gameOver">
+
+    <h1>GAME OVER</h1>
+
+    <div id="finalScore">
+        FINAL SCORE: 0
+    </div>
+
+    <button id="restart">
+        RESTART GAME
+    </button>
+
+</div>
+
+
+<!-- =========================
+     THREE.JS
+========================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+
+<script>
+
+/* =========================================================
+   NEON SPACE RUNNER
+   PC + MOBILE VERSION
+========================================================= */
+
+
+/* =========================================================
+   THREE.JS SETUP
+========================================================= */
+
+const scene = new THREE.Scene();
+
+scene.background =
+    new THREE.Color(0x02030a);
+
+scene.fog =
+    new THREE.FogExp2(
+        0x02030a,
+        0.012
+    );
+
+
+const camera =
+    new THREE.PerspectiveCamera(
+        65,
+        window.innerWidth /
+        window.innerHeight,
+        0.1,
+        1000
+    );
+
+camera.position.set(
+    0,
+    5.5,
+    10
+);
+
+camera.lookAt(
+    0,
+    1,
+    -30
+);
+
+
+const renderer =
+    new THREE.WebGLRenderer({
+        antialias: true,
+        powerPreference: "high-performance"
+    });
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+renderer.setPixelRatio(
+    Math.min(
+        window.devicePixelRatio,
+        2
+    )
+);
+
+renderer.outputColorSpace =
+    THREE.SRGBColorSpace;
+
+document.body.appendChild(
+    renderer.domElement
+);
+
+
+/* =========================================================
+   LIGHTING
+========================================================= */
+
+const ambientLight =
+    new THREE.AmbientLight(
+        0x202040,
+        1.5
+    );
+
+scene.add(
+    ambientLight
+);
+
+
+const cyanLight =
+    new THREE.PointLight(
+        0x00ffff,
+        25,
+        80
+    );
+
+cyanLight.position.set(
+    -8,
+    5,
+    5
+);
+
+scene.add(
+    cyanLight
+);
+
+
+const magentaLight =
+    new THREE.PointLight(
+        0xff0088,
+        30,
+        80
+    );
+
+magentaLight.position.set(
+    8,
+    5,
+    -10
+);
+
+scene.add(
+    magentaLight
+);
+
+
+/* =========================================================
+   MOVING FLOOR GRID
+========================================================= */
+
+const gridGroup =
+    new THREE.Group();
+
+scene.add(
+    gridGroup
+);
+
+
+const gridMaterial =
+    new THREE.LineBasicMaterial({
+        color: 0x00ffff,
+        transparent: true,
+        opacity: 0.35
+    });
+
+
+/* Horizontal Lines */
+
+for (
+    let z = -220;
+    z < 30;
+    z += 5
+) {
+
+    const geometry =
+        new THREE.BufferGeometry();
+
+    geometry.setFromPoints([
+        new THREE.Vector3(
+            -35,
+            -1,
+            z
+        ),
+
+        new THREE.Vector3(
+            35,
+            -1,
+            z
+        )
+    ]);
+
+    const line =
+        new THREE.Line(
+            geometry,
+            gridMaterial
+        );
+
+    gridGroup.add(
+        line
+    );
+}
+
+
+/* Vertical Lines */
+
+for (
+    let x = -35;
+    x <= 35;
+    x += 5
+) {
+
+    const geometry =
+        new THREE.BufferGeometry();
+
+    geometry.setFromPoints([
+        new THREE.Vector3(
+            x,
+            -1,
+            -220
+        ),
+
+        new THREE.Vector3(
+            x,
+            -1,
+            30
+        )
+    ]);
+
+    const line =
+        new THREE.Line(
+            geometry,
+            gridMaterial
+        );
+
+    gridGroup.add(
+        line
+    );
+}
+
+
+/* =========================================================
+   SIDE NEON STRIPS
+========================================================= */
+
+const sideCyan =
+    new THREE.MeshBasicMaterial({
+        color: 0x00ffff
+    });
+
+const sidePink =
+    new THREE.MeshBasicMaterial({
+        color: 0xff0088
+    });
+
+
+for (
+    const x of [-14, 14]
+) {
+
+    const geometry =
+        new THREE.BoxGeometry(
+            0.12,
+            0.12,
+            250
+        );
+
+    const strip =
+        new THREE.Mesh(
+            geometry,
+            x < 0
+                ? sideCyan
+                : sidePink
+        );
+
+    strip.position.set(
+        x,
+        -0.7,
+        -100
+    );
+
+    scene.add(
+        strip
+    );
+}
+
+
+/* =========================================================
+   PLAYER SHIP
+========================================================= */
+
+const player =
+    new THREE.Group();
+
+scene.add(
+    player
+);
+
+player.position.set(
+    0,
+    1,
+    6
+);
+
+
+/* Ship Body */
+
+const shipBodyGeometry =
+    new THREE.ConeGeometry(
+        0.85,
+        3.2,
+        4
+    );
+
+const shipMaterial =
+    new THREE.MeshStandardMaterial({
+        color: 0x121a30,
+        emissive: 0x001f3f,
+        metalness: 0.9,
+        roughness: 0.18
+    });
+
+const shipBody =
+    new THREE.Mesh(
+        shipBodyGeometry,
+        shipMaterial
+    );
+
+shipBody.rotation.x =
+    Math.PI / 2;
+
+player.add(
+    shipBody
+);
+
+
+/* Wings */
+
+const wingMaterial =
+    new THREE.MeshStandardMaterial({
+        color: 0x00ffff,
+        emissive: 0x00ffff,
+        emissiveIntensity: 2,
+        metalness: 0.8,
+        roughness: 0.15
+    });
+
+
+const wingGeometry =
+    new THREE.BoxGeometry(
+        2.8,
+        0.12,
+        0.8
+    );
+
+
+const leftWing =
+    new THREE.Mesh(
+        wingGeometry,
+        wingMaterial
+    );
+
+leftWing.position.set(
+    -1.15,
+    0,
+    0.25
+);
+
+leftWing.rotation.z =
+    -0.15;
+
+player.add(
+    leftWing
+);
+
+
+const rightWing =
+    new THREE.Mesh(
+        wingGeometry,
+        wingMaterial
+    );
+
+rightWing.position.set(
+    1.15,
+    0,
+    0.25
+);
+
+rightWing.rotation.z =
+    0.15;
+
+player.add(
+    rightWing
+);
+
+
+/* Cockpit */
+
+const cockpitGeometry =
+    new THREE.SphereGeometry(
+        0.48,
+        16,
+        8
+    );
+
+const cockpitMaterial =
+    new THREE.MeshStandardMaterial({
+        color: 0x050515,
+        emissive: 0xff0088,
+        emissiveIntensity: 2,
+        transparent: true,
+        opacity: 0.9,
+        metalness: 1
+    });
+
+const cockpit =
+    new THREE.Mesh(
+        cockpitGeometry,
+        cockpitMaterial
+    );
+
+cockpit.scale.set(
+    1,
+    0.5,
+    1.4
+);
+
+cockpit.position.set(
+    0,
+    0.35,
+    -0.45
+);
+
+player.add(
+    cockpit
+);
+
+
+/* Engine */
+
+const engineGeometry =
+    new THREE.CylinderGeometry(
+        0.35,
+        0.08,
+        1.1,
+        16
+    );
+
+const engineMaterial =
+    new THREE.MeshBasicMaterial({
+        color: 0xff0088
+    });
+
+const engine =
+    new THREE.Mesh(
+        engineGeometry,
+        engineMaterial
+    );
+
+engine.rotation.x =
+    Math.PI / 2;
+
+engine.position.set(
+    0,
+    0,
+    1.45
+);
+
+player.add(
+    engine
+);
+
+
+const engineLight =
+    new THREE.PointLight(
+        0xff0088,
+        8,
+        12
+    );
+
+engineLight.position.set(
+    0,
+    0,
+    1.6
+);
+
+player.add(
+    engineLight
+);
+
+
+/* =========================================================
+   GAME VARIABLES
+========================================================= */
+
+let obstacles = [];
+
+let gameRunning = true;
+
+let score = 0;
+
+let speed = 0.45;
+
+let elapsedTime = 0;
+
+let spawnTimer = 0;
+
+let playerVelocity = 0;
+
+
+const keys = {
+    left: false,
+    right: false
+};
+
+
+/* =========================================================
+   CREATE OBSTACLE
+========================================================= */
+
+function createObstacle() {
+
+    const group =
+        new THREE.Group();
+
+
+    const colors = [
+        0xff0088,
+        0x00ffff,
+        0x8800ff,
+        0xff5500
+    ];
+
+
+    const color =
+        colors[
+            Math.floor(
+                Math.random() *
+                colors.length
+            )
+        ];
+
+
+    const geometry =
+        new THREE.BoxGeometry(
+            1.7,
+            1.7,
+            1.7
+        );
+
+
+    const material =
+        new THREE.MeshStandardMaterial({
+            color: 0x080808,
+            emissive: color,
+            emissiveIntensity: 2.5,
+            metalness: 0.7,
+            roughness: 0.2
+        });
+
+
+    const obstacle =
+        new THREE.Mesh(
+            geometry,
+            material
+        );
+
+
+    obstacle.rotation.set(
+        Math.random(),
+        Math.random(),
+        Math.random()
+    );
+
+
+    group.add(
+        obstacle
+    );
+
+
+    /* Neon Edges */
+
+    const edgeGeometry =
+        new THREE.EdgesGeometry(
+            geometry
+        );
+
+
+    const edgeMaterial =
+        new THREE.LineBasicMaterial({
+            color: color
+        });
+
+
+    const edges =
+        new THREE.LineSegments(
+            edgeGeometry,
+            edgeMaterial
+        );
+
+
+    group.add(
+        edges
+    );
+
+
+    /* Glow Light */
+
+    const light =
+        new THREE.PointLight(
+            color,
+            8,
+            15
+        );
+
+    group.add(
+        light
+    );
+
+
+    /* Random Lane */
+
+    const lane =
+        Math.floor(
+            Math.random() * 7
+        ) - 3;
+
+
+    group.position.set(
+        lane * 2.3,
+        0.8,
+        -130
+    );
+
+
+    scene.add(
+        group
+    );
+
+
+    obstacles.push(
+        group
+    );
+}
+
+
+/* =========================================================
+   COLLISION
+========================================================= */
+
+function checkCollision(
+    a,
+    b
+) {
+
+    const distance =
+        a.position.distanceTo(
+            b.position
+        );
+
+    return distance < 1.65;
+}
+
+
+/* =========================================================
+   GAME OVER
+========================================================= */
+
+function endGame() {
+
+    if (!gameRunning)
+        return;
+
+
+    gameRunning = false;
+
+
+    document.getElementById(
+        "finalScore"
+    ).textContent =
+        "FINAL SCORE: " +
+        Math.floor(score);
+
+
+    document.getElementById(
+        "gameOver"
+    ).style.display =
+        "flex";
+}
+
+
+/* =========================================================
+   RESTART
+========================================================= */
+
+function restartGame() {
+
+    obstacles.forEach(
+        obstacle => {
+
+            scene.remove(
+                obstacle
+            );
+        }
+    );
+
+
+    obstacles = [];
+
+
+    player.position.x = 0;
+
+    player.rotation.z = 0;
+
+    player.rotation.y = 0;
+
+
+    score = 0;
+
+    speed = 0.45;
+
+    elapsedTime = 0;
+
+    spawnTimer = 0;
+
+    playerVelocity = 0;
+
+
+    gameRunning = true;
+
+
+    document.getElementById(
+        "score"
+    ).textContent =
+        "SCORE: 0";
+
+
+    document.getElementById(
+        "gameOver"
+    ).style.display =
+        "none";
+}
+
+
+/* =========================================================
+   PC KEYBOARD CONTROLS
+========================================================= */
+
+window.addEventListener(
+    "keydown",
+    function(event) {
+
+        const key =
+            event.key.toLowerCase();
+
+
+        if (
+            event.key === "ArrowLeft" ||
+            key === "a"
+        ) {
+
+            keys.left = true;
+
+            event.preventDefault();
+        }
+
+
+        if (
+            event.key === "ArrowRight" ||
+            key === "d"
+        ) {
+
+            keys.right = true;
+
+            event.preventDefault();
+        }
+
+    },
+    { passive: false }
+);
+
+
+window.addEventListener(
+    "keyup",
+    function(event) {
+
+        const key =
+            event.key.toLowerCase();
+
+
+        if (
+            event.key === "ArrowLeft" ||
+            key === "a"
+        ) {
+
+            keys.left = false;
+        }
+
+
+        if (
+            event.key === "ArrowRight" ||
+            key === "d"
+        ) {
+
+            keys.right = false;
+        }
+
+    }
+);
+
+
+/* =========================================================
+   MOBILE TOUCH CONTROLS
+========================================================= */
+
+const leftButton =
+    document.getElementById(
+        "leftButton"
+    );
+
+const rightButton =
+    document.getElementById(
+        "rightButton"
+    );
+
+
+/* LEFT */
+
+function startLeft(event) {
+
+    event.preventDefault();
+
+    keys.left = true;
+}
+
+
+function stopLeft(event) {
+
+    event.preventDefault();
+
+    keys.left = false;
+}
+
+
+leftButton.addEventListener(
+    "touchstart",
+    startLeft,
+    { passive: false }
+);
+
+leftButton.addEventListener(
+    "touchend",
+    stopLeft,
+    { passive: false }
+);
+
+leftButton.addEventListener(
+    "touchcancel",
+    stopLeft,
+    { passive: false }
+);
+
+
+/* RIGHT */
+
+function startRight(event) {
+
+    event.preventDefault();
+
+    keys.right = true;
+}
+
+
+function stopRight(event) {
+
+    event.preventDefault();
+
+    keys.right = false;
+}
+
+
+rightButton.addEventListener(
+    "touchstart",
+    startRight,
+    { passive: false }
+);
+
+rightButton.addEventListener(
+    "touchend",
+    stopRight,
+    { passive: false }
+);
+
+rightButton.addEventListener(
+    "touchcancel",
+    stopRight,
+    { passive: false }
+);
+
+
+/* Mouse support for testing buttons on PC */
+
+leftButton.addEventListener(
+    "mousedown",
+    function() {
+        keys.left = true;
+    }
+);
+
+leftButton.addEventListener(
+    "mouseup",
+    function() {
+        keys.left = false;
+    }
+);
+
+rightButton.addEventListener(
+    "mousedown",
+    function() {
+        keys.right = true;
+    }
+);
+
+rightButton.addEventListener(
+    "mouseup",
+    function() {
+        keys.right = false;
+    }
+);
+
+
+/* =========================================================
+   RESTART BUTTON
+========================================================= */
+
+document.getElementById(
+    "restart"
+).addEventListener(
+    "click",
+    restartGame
+);
+
+
+/* =========================================================
+   GAME UPDATE
+========================================================= */
+
+function updateGame() {
+
+    if (!gameRunning)
+        return;
+
+
+    /* Time */
+
+    elapsedTime += 0.016;
+
+
+    /* Increasing Speed */
+
+    speed =
+        0.45 +
+        elapsedTime * 0.012;
+
+
+    /* Player Movement */
+
+    if (keys.left) {
+
+        playerVelocity -= 0.035;
+    }
+
+
+    if (keys.right) {
+
+        playerVelocity += 0.035;
+    }
+
+
+    playerVelocity *= 0.88;
+
+
+    player.position.x +=
+        playerVelocity;
+
+
+    /* Keep Ship on Track */
+
+    player.position.x =
+        THREE.MathUtils.clamp(
+            player.position.x,
+            -7,
+            7
+        );
+
+
+    /* Ship Banking */
+
+    player.rotation.z =
+        -playerVelocity * 1.8;
+
+    player.rotation.y =
+        -playerVelocity * 0.5;
+
+
+    /* =====================================================
+       MOVE GRID
+    ===================================================== */
+
+    gridGroup.children.forEach(
+        line => {
+
+            line.position.z +=
+                speed;
+
+
+            if (
+                line.position.z > 30
+            ) {
+
+                line.position.z -=
+                    250;
+            }
+        }
+    );
+
+
+    /* =====================================================
+       SPAWN
+    ===================================================== */
+
+    spawnTimer -= 0.016;
+
+
+    const spawnDelay =
+        Math.max(
+            0.38,
+            1.15 -
+            elapsedTime * 0.008
+        );
+
+
+    if (
+        spawnTimer <= 0
+    ) {
+
+        createObstacle();
+
+        spawnTimer =
+            spawnDelay;
+    }
+
+
+    /* =====================================================
+       OBSTACLES
+    ===================================================== */
+
+    for (
+        let i =
+            obstacles.length - 1;
+
+        i >= 0;
+
+        i--
+    ) {
+
+        const obstacle =
+            obstacles[i];
+
+
+        obstacle.position.z +=
+            speed;
+
+
+        obstacle.rotation.x +=
+            0.025;
+
+        obstacle.rotation.y +=
+            0.035;
+
+
+        /* Collision */
+
+        if (
+            checkCollision(
+                player,
+                obstacle
+            )
+        ) {
+
+            endGame();
+
+            return;
+        }
+
+
+        /* Remove Passed Obstacles */
+
+        if (
+            obstacle.position.z > 15
+        ) {
+
+            scene.remove(
+                obstacle
+            );
+
+            obstacles.splice(
+                i,
+                1
+            );
+        }
+    }
+
+
+    /* =====================================================
+       SCORE
+    ===================================================== */
+
+    score +=
+        0.08 +
+        speed * 0.01;
+
+
+    document.getElementById(
+        "score"
+    ).textContent =
+        "SCORE: " +
+        Math.floor(score);
+}
+
+
+/* =========================================================
+   ANIMATION LOOP
+========================================================= */
+
+function animate() {
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    if (gameRunning) {
+
+        updateGame();
+    }
+
+
+    /* Floating Ship */
+
+    player.position.y =
+        1 +
+        Math.sin(
+            performance.now() *
+            0.004
+        ) * 0.12;
+
+
+    /* Neon Light Animation */
+
+    cyanLight.intensity =
+        22 +
+        Math.sin(
+            performance.now() *
+            0.005
+        ) * 8;
+
+
+    magentaLight.intensity =
+        25 +
+        Math.cos(
+            performance.now() *
+            0.004
+        ) * 10;
+
+
+    /* Engine Glow */
+
+    engineLight.intensity =
+        6 +
+        Math.sin(
+            performance.now() *
+            0.015
+        ) * 3;
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+}
+
+
+animate();
+
+
+/* =========================================================
+   RESPONSIVE SCREEN
+========================================================= */
+
+function resizeGame() {
+
+    camera.aspect =
+        window.innerWidth /
+        window.innerHeight;
+
+
+    camera.updateProjectionMatrix();
+
+
+    renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+    );
+}
+
+
+window.addEventListener(
+    "resize",
+    resizeGame
+);
+
+
+/* Mobile orientation changes */
+
+window.addEventListener(
+    "orientationchange",
+    function() {
+
+        setTimeout(
+            resizeGame,
+            200
+        );
+    }
+);
+
+</script>
+
+</body>
+</html>
